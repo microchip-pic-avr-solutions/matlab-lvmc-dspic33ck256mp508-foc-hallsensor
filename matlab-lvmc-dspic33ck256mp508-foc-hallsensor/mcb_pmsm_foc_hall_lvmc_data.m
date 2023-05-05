@@ -1,8 +1,8 @@
 %% ************************************************************************
-% Model         :   Field Oriented Control of PMSM Using Hall Sensor
-% Description   :   Set Parameters for FOC of PMSM Using Hall Sensor
+% Model         :   Hall Sensor Based FOC for PMSM
+% Description   :   Set Parameters for Hall Sensor Based FOC for PMSM
 % File name     :   mcb_pmsm_foc_hall_lvmc_data.m
-% Copyright 2022 Microchip Technology Inc.
+% Copyright 2023 Microchip Technology Inc.
 
 %% Simulation Parameters
 
@@ -35,8 +35,7 @@ pmsm.Kt = 0.274;                %Nm/A       // Torque constant
 pmsm.J = 7.061551833333e-6;     %Kg-m2      // Inertia in SI units
 pmsm.B = 2.636875217824e-6;     %Kg-m2/s    // Friction Co-efficient
 pmsm.I_rated  = 3.42*sqrt(2);   %A      	// Rated current (phase-peak)
-pmsm.QEPSlits = 1000;           %           // QEP Encoder Slits
-pmsm.N_max    = 2000;           %rpm        // Max speed
+pmsm.N_max    = 2896;           %rpm        // Max speed
 pmsm.FluxPM   = (pmsm.Ke)/(sqrt(3)*2*pi*1000*pmsm.p/60); %PM flux computed from Ke
 pmsm.T_rated  = (3/2)*pmsm.p*pmsm.FluxPM*pmsm.I_rated;   %Get T_rated from I_rated
 
@@ -71,4 +70,15 @@ PI_params = mcb.internal.SetControllerParameters(pmsm,inverter,PU_System,T_pwm,T
 PI_params.delay_Currents    = int32(Ts/Ts_simulink);
 PI_params.delay_Position    = int32(Ts/Ts_simulink);
 PI_params.delay_Speed       = int32(Ts_speed/Ts_simulink);
-PI_params.delay_Speed1       = (PI_params.delay_IIR + 0.5*Ts)/Ts_speed;
+PI_params.delay_Speed1      = (PI_params.delay_IIR + 0.5*Ts)/Ts_speed;
+
+%% Open loop reference values
+T_Ref_openLoop          = 1;                    % Sec // Time for open-loop start-up
+Speed_Ref_openLoop      = 400;                  % RPM // Speed referene for open-loop start-up
+Iq_Ref_openLoop         = 0.75;                 % A   // Iq referene for open-loop start-up
+
+%% Hall Sensor Calculations
+Timer_Prescalar = 64;
+CPU_Frequency = 100e6;                          % Hz
+PhaseIncCalc = (CPU_Frequency/(PWM_frequency*Timer_Prescalar))*(65535);
+SpeedMulti = (CPU_Frequency/(pmsm.p*Timer_Prescalar))*(60);
